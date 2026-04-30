@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trasiego Wines — Propuesta Operacional 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080808;--bg-card:#111111;--bg-card-hover:#181818;
+  --cyan:#00d4ff;--magenta:#ff00aa;--violet:#7c3aed;
+  --gradient:linear-gradient(135deg,#00d4ff,#7c3aed,#ff00aa);
+  --border:rgba(255,255,255,0.1);
+  --light-bg:#ffffff;--light-card:#f5f5f5;--light-border:rgba(0,0,0,0.09);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:'Inter',sans-serif}
+#progress{position:fixed;top:0;left:0;height:2px;width:5%;background:linear-gradient(90deg,#00d4ff,#7c3aed,#ff00aa);transition:width .45s cubic-bezier(.4,0,.2,1);z-index:300}
+#counter{position:fixed;bottom:22px;right:26px;font-family:'Space Grotesk';font-size:12px;color:rgba(255,255,255,.3);letter-spacing:.08em;z-index:300}
+.nav-btn{position:fixed;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:rgba(255,255,255,.3);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:300;transition:all .2s}
+.nav-btn:hover{background:rgba(255,255,255,.1);color:#fff}
+#btn-prev{left:12px}#btn-next{right:12px}
+.zone{position:fixed;top:0;height:100%;width:13%;cursor:pointer;z-index:100}
+#zone-prev{left:0}#zone-next{right:0}
+#deck{position:relative;width:100%;height:100%}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:52px 96px;background:var(--bg);color:#fff;opacity:0;pointer-events:none;transition:opacity .45s ease;zoom:1.15}
+.slide.active{opacity:1;pointer-events:all}
+.slide-light{background:var(--light-bg)!important;color:#111!important}
+.headline{font-family:'Space Grotesk';font-weight:300;letter-spacing:-.04em;line-height:1.02}
+.grad{background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.label{font-family:'Space Grotesk';font-size:10px;letter-spacing:.18em;text-transform:uppercase}
+.slide-title{font-family:'Space Grotesk';font-size:clamp(17px,1.9vw,25px);font-weight:400;letter-spacing:-.02em;color:#e0e0e0;margin-bottom:28px;text-align:center}
+.slide-light .slide-title{color:#444}
+.sp-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:22px 24px;position:relative;overflow:hidden;transition:background .2s,border-color .2s}
+.sp-card::before{content:'';position:absolute;inset:0;border-radius:8px;background:radial-gradient(300px circle at var(--mx,-999px) var(--my,-999px),rgba(0,212,255,.12),transparent 60%);pointer-events:none}
+.sp-card:hover{background:var(--bg-card-hover);border-color:rgba(0,212,255,.25)}
+.light-card{background:var(--light-card);border:1px solid var(--light-border);border-radius:8px;padding:22px 24px;box-shadow:0 2px 12px rgba(0,0,0,.05);transition:box-shadow .2s,border-color .2s}
+.light-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.09)}
+.deco{position:absolute;pointer-events:none;user-select:none;font-family:'Space Grotesk';font-weight:300;line-height:1;color:rgba(255,255,255,.05);letter-spacing:-.06em;font-size:clamp(200px,32vw,420px);left:50%;top:50%;transform:translate(-50%,-50%);z-index:0}
+.side-num{font-family:'Space Grotesk';font-weight:300;line-height:1;letter-spacing:-.05em;pointer-events:none;user-select:none}
+.btn-link{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:6px;font-family:'Space Grotesk';font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;cursor:pointer;transition:all .2s;border:none}
+.btn-cyan{background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.35);color:var(--cyan)}
+.btn-cyan:hover{background:rgba(0,212,255,.22);border-color:var(--cyan)}
+.btn-violet{background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.35);color:#a78bfa}
+.btn-violet:hover{background:rgba(124,58,237,.22);border-color:#a78bfa}
+.tag-alta{display:inline-block;padding:2px 8px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,60,60,.15);color:#ff6b6b}
+.tag-media{display:inline-block;padding:2px 8px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,170,0,.12);color:#fbbf24}
+#particles-canvas{position:absolute;inset:0;pointer-events:none;z-index:0}
+.xls-light{width:100%;border-collapse:collapse;font-family:'Space Grotesk';font-size:clamp(11px,1vw,13px)}
+.xls-light thead tr{border-bottom:2px solid rgba(0,0,0,.1)}
+.xls-light thead th{padding:9px 14px;text-align:left;font-weight:600;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#999;white-space:nowrap}
+.xls-light thead th:last-child{text-align:right}
+.xls-light tbody tr{border-bottom:1px solid rgba(0,0,0,.06)}
+.xls-light tbody tr:hover{background:rgba(0,0,0,.02)}
+.xls-light tbody td{padding:8px 14px;color:#111;vertical-align:middle}
+.xls-light tbody td:first-child{font-weight:500}
+.xls-light tbody td:last-child{text-align:right;font-weight:700;white-space:nowrap}
+.xls-light .total-row td{background:rgba(0,0,0,.03);border-top:2px solid rgba(0,0,0,.15);font-weight:700;padding:10px 14px}
+.xls-light .total-row td:last-child{color:var(--violet);font-size:clamp(14px,1.3vw,17px)}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<div id="counter">1 / 13</div>
+<button id="btn-prev" class="nav-btn" onclick="go(-1)">&#8592;</button>
+<button id="btn-next" class="nav-btn" onclick="go(1)">&#8594;</button>
+<div class="zone" id="zone-prev" onclick="go(-1)"></div>
+<div class="zone" id="zone-next" onclick="go(1)"></div>
+
+<div id="deck">
+
+<!-- ══ S1 PORTADA ══ -->
+<div class="slide active" id="s1" style="position:relative;overflow:hidden;">
+  <canvas id="particles-canvas"></canvas>
+  <div style="text-align:center;max-width:860px;position:relative;z-index:2;">
+    <p class="label" style="color:rgba(255,255,255,.3);margin-bottom:22px;">Diagnóstico operativo · Abril 2026</p>
+    <h1 id="scramble" class="headline grad" style="font-size:clamp(52px,7.5vw,96px);margin-bottom:24px;display:block;min-height:1em;">Trasiego Wines</h1>
+    <p id="particle-text" style="font-family:'Space Grotesk';font-size:clamp(16px,2vw,26px);font-weight:300;color:#fff;letter-spacing:-.02em;min-height:1.5em;opacity:0;">Sistema de datos centralizado y visibilidad en tiempo real</p>
+    <div style="margin-top:48px;">
+      <p style="font-family:'Space Grotesk';font-size:12px;font-weight:300;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:.08em;text-transform:uppercase;">Andy Montes &nbsp;·&nbsp; Estratega de Datos &nbsp;·&nbsp; AI Fluency</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S2 AGENDA (LIGHT) ══ -->
+<div class="slide slide-light" id="s2" style="position:relative;overflow:hidden;">
+  <p class="slide-title">Lo que revisé, lo que encontré y lo que construí.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:860px;width:100%;">
+
+    <div style="position:relative;overflow:hidden;background:var(--light-card);border:1px solid var(--light-border);border-top:3px solid var(--cyan);border-radius:8px;padding:20px 20px 20px 80px;box-shadow:0 2px 12px rgba(0,0,0,.05);">
+      <span class="side-num" style="position:absolute;left:-2px;top:50%;transform:translateY(-50%);font-size:clamp(72px,9vw,108px);color:rgba(0,212,255,.18);">01</span>
+      <div class="label" style="color:var(--cyan);margin-bottom:8px;">El diagnóstico</div>
+      <h3 class="headline" style="font-size:clamp(16px,1.8vw,22px);margin-bottom:6px;color:#111;">Lo que vi en el negocio</h3>
+      <p style="font-size:12px;color:#333;line-height:1.6;">5 elementos clave que hoy no conversan entre sí y lo que eso le cuesta al negocio en tiempo y control.</p>
+    </div>
+
+    <div style="position:relative;overflow:hidden;background:var(--light-card);border:1px solid var(--light-border);border-top:3px solid var(--violet);border-radius:8px;padding:20px 20px 20px 80px;box-shadow:0 2px 12px rgba(0,0,0,.05);">
+      <span class="side-num" style="position:absolute;left:-2px;top:50%;transform:translateY(-50%);font-size:clamp(72px,9vw,108px);color:rgba(124,58,237,.18);">02</span>
+      <div class="label" style="color:var(--violet);margin-bottom:8px;">El costo del desorden</div>
+      <h3 class="headline" style="font-size:clamp(16px,1.8vw,22px);margin-bottom:6px;color:#111;">Lo que hoy se pierde</h3>
+      <p style="font-size:12px;color:#333;line-height:1.6;">Tiempo, margen y decisiones que llegan tarde porque la información no está conectada.</p>
+    </div>
+
+    <div style="position:relative;overflow:hidden;background:var(--light-card);border:1px solid var(--light-border);border-top:3px solid var(--magenta);border-radius:8px;padding:20px 20px 20px 80px;box-shadow:0 2px 12px rgba(0,0,0,.05);">
+      <span class="side-num" style="position:absolute;left:-2px;top:50%;transform:translateY(-50%);font-size:clamp(72px,9vw,108px);color:rgba(255,0,170,.18);">03</span>
+      <div class="label" style="color:var(--magenta);margin-bottom:8px;">Lo que construí</div>
+      <h3 class="headline" style="font-size:clamp(16px,1.8vw,22px);margin-bottom:6px;color:#111;">El ecosistema ya existe</h3>
+      <p style="font-size:12px;color:#333;line-height:1.6;">Modelo de datos, dashboard operacional y reporte de directorio. Con tu data. Funcionando hoy.</p>
+    </div>
+
+    <div style="position:relative;overflow:hidden;background:var(--light-card);border:1px solid var(--light-border);border-top:3px solid var(--cyan);border-radius:8px;padding:20px 20px 20px 80px;box-shadow:0 4px 20px rgba(0,212,255,.1);">
+      <span class="side-num" style="position:absolute;left:-2px;top:50%;transform:translateY(-50%);font-size:clamp(72px,9vw,108px);color:rgba(0,212,255,.18);">04</span>
+      <div class="label" style="color:var(--cyan);margin-bottom:8px;">El potencial</div>
+      <h3 class="headline" style="font-size:clamp(16px,1.8vw,22px);margin-bottom:6px;color:#111;">Lo que viene</h3>
+      <p style="font-size:12px;color:#333;line-height:1.6;">Fases, automatizaciones posibles e inversión. Por etapas, sin sobrecargarte.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ S3 DIVISOR — LO QUE VI ══ -->
+<div class="slide" id="s3" style="position:relative;">
+  <div class="deco">01</div>
+  <div style="text-align:center;position:relative;z-index:2;">
+    <div class="label" style="color:var(--cyan);margin-bottom:16px;">— El diagnóstico —</div>
+    <h2 class="headline" style="font-size:clamp(52px,8vw,100px);margin-bottom:22px;">No es un<br>problema<br><span class="grad">de producto.</span></h2>
+    <p style="font-family:'Space Grotesk';font-size:clamp(14px,1.5vw,20px);font-weight:300;color:var(--cyan);">Es un problema de estructura.</p>
+  </div>
+</div>
+
+<!-- ══ S4 LOS 5 ELEMENTOS DESCONECTADOS (LIGHT) ══ -->
+<div class="slide slide-light" id="s4">
+  <p class="slide-title">Hoy no existe una lógica que conecte bien estas 5 cosas.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;max-width:900px;width:100%;">
+
+    <div class="light-card" style="border-left:3px solid var(--cyan);">
+      <div class="label" style="color:var(--cyan);margin-bottom:10px;">Producto</div>
+      <h3 class="headline" style="font-size:clamp(15px,1.6vw,20px);margin-bottom:8px;color:#111;">Sin estructura única</h3>
+      <p style="font-size:12px;color:#333;line-height:1.6;">No hay un maestro de productos que gobierne familias, variantes, formatos y packs. Cuesta comparar, costear y reportar.</p>
+    </div>
+
+    <div class="light-card" style="border-left:3px solid var(--violet);">
+      <div class="label" style="color:var(--violet);margin-bottom:10px;">Canal</div>
+      <h3 class="headline" style="font-size:clamp(15px,1.6vw,20px);margin-bottom:8px;color:#111;">Lógicas separadas</h3>
+      <p style="font-size:12px;color:#333;line-height:1.6;">Retail, horeca, exportación, directo e intercompany operan cada uno con su propio archivo. La información no conversa.</p>
+    </div>
+
+    <div class="light-card" style="border-left:3px solid var(--magenta);">
+      <div class="label" style="color:var(--magenta);margin-bottom:10px;">Cliente</div>
+      <h3 class="headline" style="font-size:clamp(15px,1.6vw,20px);margin-bottom:8px;color:#111;">Sin seguimiento</h3>
+      <p style="font-size:12px;color:#333;line-height:1.6;">Hay información pero no hay sistema. Un cliente puede llevar 65 días sin comprar y nadie lo detecta hasta que ya es tarde.</p>
+    </div>
+
+    <div class="light-card" style="border-left:3px solid var(--cyan);">
+      <div class="label" style="color:var(--cyan);margin-bottom:10px;">Costo</div>
+      <h3 class="headline" style="font-size:clamp(15px,1.6vw,20px);margin-bottom:8px;color:#111;">No parametrizado</h3>
+      <p style="font-size:12px;color:#333;line-height:1.6;">El costeo es complejo y manual. El margen no siempre es fácil de leer — y cuando hay error, no se detecta rápido.</p>
+    </div>
+
+    <div class="light-card" style="border-left:3px solid var(--violet);grid-column:span 2;">
+      <div class="label" style="color:var(--violet);margin-bottom:10px;">Reportería</div>
+      <h3 class="headline" style="font-size:clamp(15px,1.6vw,20px);margin-bottom:8px;color:#111;">Reconstrucción manual cada vez</h3>
+      <p style="font-size:12px;color:#333;line-height:1.6;">Cada vez que necesitas responder algo importante — margen, caja, Walmart — hay que armar la respuesta desde cero. No debería ser así.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ S5 EL COSTO REAL (LIGHT) ══ -->
+<div class="slide slide-light" id="s5">
+  <p class="slide-title">El problema no es solo de tiempo. Es de control y de decisiones.</p>
+  <div style="display:flex;flex-direction:column;gap:14px;max-width:780px;width:100%;">
+
+    <div style="display:flex;align-items:flex-start;gap:16px;padding:16px 20px;border:1px solid rgba(255,60,60,.2);border-radius:8px;background:rgba(255,60,60,.03);">
+      <span style="font-size:20px;min-width:28px;">⚠️</span>
+      <div><p class="headline" style="font-size:clamp(15px,1.6vw,19px);color:#111;margin-bottom:4px;">Margen que no se lee bien</p><p style="font-size:12px;color:#333;line-height:1.6;">Una venta a Shanghai se hizo a USD 3.90 vs costo USD 4.20. Margen negativo de -7%. Sin sistema, eso no se detecta a tiempo.</p></div>
+    </div>
+
+    <div style="display:flex;align-items:flex-start;gap:16px;padding:16px 20px;border:1px solid rgba(0,212,255,.2);border-radius:8px;background:rgba(0,212,255,.03);">
+      <span style="font-size:20px;min-width:28px;">🏪</span>
+      <div><p class="headline" style="font-size:clamp(15px,1.6vw,19px);color:#111;margin-bottom:4px;">Walmart con demasiado esfuerzo manual</p><p style="font-size:12px;color:#333;line-height:1.6;">Quiebres de stock sin alertas, promos sin rotación, reponedor que no actuó. El canal más grande del negocio operando reactivamente.</p></div>
+    </div>
+
+    <div style="display:flex;align-items:flex-start;gap:16px;padding:16px 20px;border:1px solid rgba(124,58,237,.2);border-radius:8px;background:rgba(124,58,237,.03);">
+      <span style="font-size:20px;min-width:28px;">👤</span>
+      <div><p class="headline" style="font-size:clamp(15px,1.6vw,19px);color:#111;margin-bottom:4px;">Clientes que se pierden en silencio</p><p style="font-size:12px;color:#333;line-height:1.6;">Restaurant Los Robles: cliente histórico, sin compras hace 65 días, ~$600K de venta trimestral en riesgo. Sin sistema, no hay alerta.</p></div>
+    </div>
+
+    <div style="display:flex;align-items:flex-start;gap:16px;padding:16px 20px;border:1px solid rgba(255,0,170,.2);border-radius:8px;background:rgba(255,0,170,.03);">
+      <span style="font-size:20px;min-width:28px;">⏱️</span>
+      <div><p class="headline" style="font-size:clamp(15px,1.6vw,19px);color:#111;margin-bottom:4px;">Tiempo que debería ir a estrategia</p><p style="font-size:12px;color:#333;line-height:1.6;">Llenado manual de planillas, cruces de datos, revisiones dobles. Horas de trabajo operativo que hoy no tienen retorno estratégico.</p></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ S6 DIVISOR — LO QUE CONSTRUÍ ══ -->
+<div class="slide" id="s6" style="position:relative;">
+  <div class="deco">02</div>
+  <div style="text-align:center;position:relative;z-index:2;">
+    <div class="label" style="color:var(--magenta);margin-bottom:16px;">— Lo que construí —</div>
+    <h2 class="headline" style="font-size:clamp(48px,7.5vw,96px);margin-bottom:22px;">Ya existe.<br><span class="grad">Con tu data.</span></h2>
+    <p style="font-family:'Space Grotesk';font-size:clamp(14px,1.5vw,20px);font-weight:300;color:rgba(255,255,255,.6);">Un ejercicio con data simulada para mostrarte el potencial.<br>Todo puede adaptarse a tu realidad exacta.</p>
+  </div>
+</div>
+
+<!-- ══ S7 EL ECOSISTEMA (LIGHT) ══ -->
+<div class="slide slide-light" id="s7">
+  <p class="slide-title">Tres piezas conectadas. Una sola fuente de verdad.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;max-width:900px;width:100%;">
+
+    <div style="background:var(--light-card);border:1px solid var(--light-border);border-top:3px solid var(--cyan);border-radius:8px;padding:22px 20px;box-shadow:0 2px 12px rgba(0,0,0,.05);">
+      <div class="label" style="color:var(--cyan);margin-bottom:12px;">01 — Modelo de datos</div>
+      <h3 class="headline" style="font-size:clamp(16px,1.8vw,22px);margin-bottom:10px;color:#111;">Google Sheets centralizado</h3>
+      <p style="font-size:12px;color:#333;line-height:1.6;margin-bottom:16px;">Maestros de productos, clientes, proveedores, ventas, compras y alertas. Los 3 alimentan el mismo lugar.</p>
+      <a href="https://docs.google.com/spreadsheets/d/1p71o2cQb5gaUrpuKgxQ47NOU8XD3OzKRxveiW5NaiK8/edit" target="_blank" class="btn-link btn-cyan" style="font-size:10px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Ver modelo de datos
+      </a>
+    </div>
+
+    <div style="background:var(--light-card);border:1px solid var(--light-border);border-top:3px solid var(--violet);border-radius:8px;padding:22px 20px;box-shadow:0 2px 12px rgba(0,0,0,.05);">
+      <div class="label" style="color:var(--violet);margin-bottom:12px;">02 — Dashboard operacional</div>
+      <h3 class="headline" style="font-size:clamp(16px,1.8vw,22px);margin-bottom:10px;color:#111;">Visibilidad en tiempo real</h3>
+      <p style="font-size:12px;color:#333;line-height:1.6;margin-bottom:16px;">Ventas, margen, caja, Walmart, CxC, CxP y 20+ alertas automáticas. Todo desde un solo panel.</p>
+      <a href="[URL_DASHBOARD]" target="_blank" class="btn-link btn-violet" style="font-size:10px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Ver dashboard
+      </a>
+    </div>
+
+    <div style="background:var(--light-card);border:1px solid var(--light-border);border-top:3px solid var(--magenta);border-radius:8px;padding:22px 20px;box-shadow:0 2px 12px rgba(0,0,0,.05);">
+      <div class="label" style="color:var(--magenta);margin-bottom:12px;">03 — Reporte de directorio</div>
+      <h3 class="headline" style="font-size:clamp(16px,1.8vw,22px);margin-bottom:10px;color:#111;">Descargable en un click</h3>
+      <p style="font-size:12px;color:#333;line-height:1.6;margin-bottom:16px;">El reporte ejecutivo sale directo desde el botón "Exportar" del dashboard. Sin armar nada manualmente.</p>
+      <div style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:6px;background:rgba(255,0,170,.08);border:1px solid rgba(255,0,170,.25);font-family:'Space Grotesk';font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--magenta);">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Disponible en el dashboard
+      </div>
+    </div>
+
+  </div>
+  <p style="font-size:11px;color:#999;margin-top:18px;font-family:'Space Grotesk';text-align:center;">* Ejercicio con data simulada basada en la estructura real del negocio. Todo adaptable.</p>
+</div>
+
+<!-- ══ S8 EL MODELO DE DATOS (LIGHT) ══ -->
+<div class="slide slide-light" id="s8">
+  <div style="max-width:860px;width:100%;">
+    <p class="label" style="color:var(--cyan);margin-bottom:14px;">El modelo de datos</p>
+    <h2 class="headline" style="font-size:clamp(28px,4vw,50px);margin-bottom:24px;color:#111;">Un solo lugar.<br>Los tres alimentan lo mismo.</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+      <div style="padding:18px 20px;border-radius:8px;border:1px solid var(--light-border);background:var(--light-card);">
+        <div class="label" style="color:var(--cyan);margin-bottom:8px;">Maestros base</div>
+        <p style="font-size:13px;color:#111;font-weight:500;margin-bottom:5px;">Productos · Clientes · Proveedores</p>
+        <p style="font-size:12px;color:#333;line-height:1.6;">Identificadores únicos por producto. Al ingresarlo, se completan solos: costo, margen, canal, formato, precio.</p>
+      </div>
+
+      <div style="padding:18px 20px;border-radius:8px;border:1px solid var(--light-border);background:var(--light-card);">
+        <div class="label" style="color:var(--violet);margin-bottom:8px;">Operación diaria</div>
+        <p style="font-size:13px;color:#111;font-weight:500;margin-bottom:5px;">Ventas · Compras · CxC · CxP</p>
+        <p style="font-size:12px;color:#333;line-height:1.6;">Bernardita, Vicente y el equipo ingresan en una sola hoja. Sin duplicar, sin cruzar archivos, sin perder versiones.</p>
+      </div>
+
+      <div style="padding:18px 20px;border-radius:8px;border:1px solid var(--light-border);background:var(--light-card);">
+        <div class="label" style="color:var(--magenta);margin-bottom:8px;">Walmart</div>
+        <p style="font-size:13px;color:#111;font-weight:500;margin-bottom:5px;">Salas · SKUs · Semanas · Alertas</p>
+        <p style="font-size:12px;color:#333;line-height:1.6;">La data de Walmart entra al modelo y genera automáticamente alertas de quiebre, rotación y oportunidad de rollout.</p>
+      </div>
+
+      <div style="padding:18px 20px;border-radius:8px;border:1px solid rgba(0,212,255,.2);background:rgba(0,212,255,.03);">
+        <div class="label" style="color:var(--cyan);margin-bottom:8px;">Listo para conectar</div>
+        <p style="font-size:13px;color:#111;font-weight:500;margin-bottom:5px;">Nubox API · Apps Script · Cartolas</p>
+        <p style="font-size:12px;color:#333;line-height:1.6;">La arquitectura ya está pensada para integrar Nubox, leer cartolas bancarias automáticamente y escalar sin rehacer todo.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══ S9 ALERTAS Y AUTOMATIZACIONES (LIGHT) ══ -->
+<div class="slide slide-light" id="s9">
+  <p class="slide-title">Lo que el sistema ya detecta solo. Y lo que podría detectar.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:860px;width:100%;">
+
+    <div style="padding:18px 20px;border-radius:8px;border:1px solid rgba(255,60,60,.2);background:rgba(255,60,60,.03);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span class="tag-alta">Alta</span>
+        <span class="label" style="color:#888;">Hoy activo en el sistema</span>
+      </div>
+      <p style="font-size:13px;color:#111;font-weight:500;margin-bottom:4px;">20+ alertas automáticas clasificadas</p>
+      <p style="font-size:12px;color:#333;line-height:1.6;">CxC vencidas, quiebres Walmart, margen negativo export, flujo de caja tenso, F29 próximo, budget excedido.</p>
+    </div>
+
+    <div style="padding:18px 20px;border-radius:8px;border:1px solid rgba(0,212,255,.2);background:rgba(0,212,255,.03);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span class="tag-media">Próximo</span>
+        <span class="label" style="color:#888;">Integración Nubox API</span>
+      </div>
+      <p style="font-size:13px;color:#111;font-weight:500;margin-bottom:4px;">Cuentas por pagar y cobrar automáticas</p>
+      <p style="font-size:12px;color:#333;line-height:1.6;">Nubox tiene API. Las CxC y CxP que hoy lleva manual podrían actualizarse solas desde la contabilidad.</p>
+    </div>
+
+    <div style="padding:18px 20px;border-radius:8px;border:1px solid rgba(124,58,237,.2);background:rgba(124,58,237,.03);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span class="tag-media">Próximo</span>
+        <span class="label" style="color:#888;">Cartolas bancarias</span>
+      </div>
+      <p style="font-size:13px;color:#111;font-weight:500;margin-bottom:4px;">Lectura automática desde Drive</p>
+      <p style="font-size:12px;color:#333;line-height:1.6;">Apps Script lee los PDFs/CSVs de cartola desde Drive, los interpreta y los cruza con las CxC pendientes. Sin carga manual.</p>
+    </div>
+
+    <div style="padding:18px 20px;border-radius:8px;border:1px solid rgba(255,0,170,.2);background:rgba(255,0,170,.03);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span class="tag-media">Próximo</span>
+        <span class="label" style="color:#888;">Walmart auto-reconciliación</span>
+      </div>
+      <p style="font-size:13px;color:#111;font-weight:500;margin-bottom:4px;">Del reporte descargado a la acción</p>
+      <p style="font-size:12px;color:#333;line-height:1.6;">El reporte semanal de Walmart entra al modelo, se cruza con el maestro y genera la agenda de gestión automáticamente.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ S10 DIVISOR — LO QUE VIENE ══ -->
+<div class="slide" id="s10" style="position:relative;">
+  <div class="deco">03</div>
+  <div style="text-align:center;position:relative;z-index:2;">
+    <div class="label" style="color:var(--violet);margin-bottom:16px;">— El potencial —</div>
+    <h2 class="headline" style="font-size:clamp(52px,8vw,100px);margin-bottom:22px;">Menos planillas.<br><span class="grad">Más estrategia.</span></h2>
+    <p style="font-family:'Space Grotesk';font-size:clamp(14px,1.5vw,20px);font-weight:300;color:rgba(255,255,255,.6);">Por etapas. Sin sobrecargarte. Sin rehacer lo que ya funciona.</p>
+  </div>
+</div>
+
+<!-- ══ S11 LAS FASES (LIGHT) ══ -->
+<div class="slide slide-light" id="s11">
+  <p class="slide-title">Un camino claro. Se deja lista una fase y se avanza a la siguiente.</p>
+  <div style="display:flex;flex-direction:column;gap:12px;max-width:780px;width:100%;">
+
+    <div style="display:flex;align-items:flex-start;gap:16px;padding:16px 20px;border:1px solid rgba(0,212,255,.2);border-radius:8px;background:rgba(0,212,255,.03);">
+      <span class="headline" style="font-size:clamp(26px,2.8vw,38px);color:var(--cyan);min-width:40px;line-height:1;">1</span>
+      <div>
+        <p class="headline" style="font-size:clamp(15px,1.6vw,20px);color:#111;margin-bottom:4px;">Orden mínimo viable</p>
+        <p style="font-size:12px;color:#333;line-height:1.6;">Maestro de productos con costeo, registro unificado de ventas, CxC y CxP con alertas, rutina Walmart definida. La base que hace que todo lo demás tenga sentido.</p>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:flex-start;gap:16px;padding:16px 20px;border:1px solid rgba(124,58,237,.2);border-radius:8px;background:rgba(124,58,237,.03);">
+      <span class="headline" style="font-size:clamp(26px,2.8vw,38px);color:var(--violet);min-width:40px;line-height:1;">2</span>
+      <div>
+        <p class="headline" style="font-size:clamp(15px,1.6vw,20px);color:#111;margin-bottom:4px;">Automatización de lo crítico</p>
+        <p style="font-size:12px;color:#333;line-height:1.6;">Integración Nubox, lectura de cartolas, alertas automáticas, Walmart auto-reconciliado. Los procesos repetitivos dejan de depender de ti.</p>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:flex-start;gap:16px;padding:16px 20px;border:1px solid rgba(255,0,170,.2);border-radius:8px;background:rgba(255,0,170,.03);">
+      <span class="headline" style="font-size:clamp(26px,2.8vw,38px);color:var(--magenta);min-width:40px;line-height:1;">3</span>
+      <div>
+        <p class="headline" style="font-size:clamp(15px,1.6vw,20px);color:#111;margin-bottom:4px;">Visibilidad y lectura</p>
+        <p style="font-size:12px;color:#333;line-height:1.6;">Dashboard en vivo conectado a Sheets, reporte de directorio automatizado, vista USA con Quickbooks integrado si escala.</p>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:flex-start;gap:16px;padding:16px 20px;border:1px solid rgba(0,212,255,.1);border-radius:8px;background:rgba(0,0,0,.02);border-style:dashed;">
+      <span class="headline" style="font-size:clamp(26px,2.8vw,38px);color:#aaa;min-width:40px;line-height:1;">4</span>
+      <div>
+        <p class="headline" style="font-size:clamp(15px,1.6vw,20px);color:#666;margin-bottom:4px;">Crecimiento — cuando la base esté sólida</p>
+        <p style="font-size:12px;color:#888;line-height:1.6;">Marketing, e-commerce con tracción real, CRM y automatización comercial. Recién ahí tiene sentido empujar fuerte.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ S12 INVERSIÓN (LIGHT) ══ -->
+<div class="slide slide-light" id="s12">
+  <div style="max-width:820px;width:100%;">
+    <p class="slide-title" style="text-align:left;margin-bottom:20px;">Propuesta de inversión · Por fases · Conversable</p>
+    <table class="xls-light">
+      <thead>
+        <tr><th>Fase</th><th>Qué incluye</th><th>Plazo estimado</th><th style="text-align:right;">Inversión ref.</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color:var(--cyan);">Fase 1 · Orden</td>
+          <td>Maestro de datos, costeo, ventas unificadas, alertas CxC/CxP, rutina Walmart</td>
+          <td>3–4 semanas</td>
+          <td style="text-align:right;color:var(--violet);">$000.000</td>
+        </tr>
+        <tr>
+          <td style="color:var(--violet);">Fase 2 · Automatización</td>
+          <td>Nubox API, cartolas bancarias, alertas automáticas, Walmart auto-reconciliado</td>
+          <td>4–6 semanas</td>
+          <td style="text-align:right;color:var(--violet);">$000.000</td>
+        </tr>
+        <tr>
+          <td style="color:var(--magenta);">Fase 3 · Visibilidad</td>
+          <td>Dashboard en vivo conectado a Sheets, reporte directorio automatizado</td>
+          <td>3–4 semanas</td>
+          <td style="text-align:right;color:var(--violet);">$000.000</td>
+        </tr>
+        <tr class="total-row">
+          <td colspan="3">Total Fases 1–3 · Referencial · Conversable según prioridades</td>
+          <td>$000.000</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:18px;">
+      <div class="light-card" style="border-top:3px solid var(--cyan);padding:16px 18px;">
+        <p class="label" style="color:var(--cyan);margin-bottom:6px;">Forma de trabajo</p>
+        <p style="font-size:12px;color:#333;line-height:1.55;">Por fases. Se cierra una, se evalúa y se avanza. Sin comprometer todo de golpe.</p>
+      </div>
+      <div class="light-card" style="border-top:3px solid var(--violet);padding:16px 18px;">
+        <p class="label" style="color:var(--violet);margin-bottom:6px;">Lo que aprendes</p>
+        <p style="font-size:12px;color:#333;line-height:1.55;">Cómo operar y mantener el sistema. No quedas dependiente de nadie para el día a día.</p>
+      </div>
+      <div class="light-card" style="border-top:3px solid var(--magenta);padding:16px 18px;">
+        <p class="label" style="color:var(--magenta);margin-bottom:6px;">Lo que queda resuelto</p>
+        <p style="font-size:12px;color:#333;line-height:1.55;">Modelo, automatizaciones y tableros bien construidos desde el inicio. Sin rehacer después.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S13 CIERRE (DARK) ══ -->
+<div class="slide" id="s13">
+  <div style="text-align:center;max-width:780px;">
+    <p class="label" style="color:rgba(255,255,255,.3);margin-bottom:20px;">Trasiego Wines · Propuesta operacional 2026</p>
+    <h1 class="headline" style="font-size:clamp(32px,5vw,66px);margin-bottom:24px;">El negocio ya funciona.<br><span class="grad">Hagámoslo trabajar para ti.</span></h1>
+    <div style="height:1px;background:var(--border);margin:24px auto;max-width:400px;"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:28px;">
+
+      <div style="position:relative;overflow:hidden;padding:16px 14px;border:1px solid rgba(0,212,255,.15);border-radius:6px;background:rgba(0,212,255,.03);">
+        <span class="side-num" style="position:absolute;right:-4px;bottom:-6px;font-size:clamp(46px,5.5vw,62px);color:rgba(0,212,255,.14);line-height:1;">01</span>
+        <p class="headline" style="font-size:clamp(20px,2.2vw,30px);color:var(--cyan);letter-spacing:-.02em;position:relative;z-index:1;">~4 hrs</p>
+        <p class="label" style="color:rgba(255,255,255,.4);margin-top:6px;position:relative;z-index:1;">por semana recuperadas<br>para estrategia</p>
+      </div>
+
+      <div style="position:relative;overflow:hidden;padding:16px 14px;border:1px solid rgba(124,58,237,.15);border-radius:6px;background:rgba(124,58,237,.03);">
+        <span class="side-num" style="position:absolute;right:-4px;bottom:-6px;font-size:clamp(46px,5.5vw,62px);color:rgba(124,58,237,.14);line-height:1;">02</span>
+        <p class="headline" style="font-size:clamp(20px,2.2vw,30px);color:#a78bfa;letter-spacing:-.02em;position:relative;z-index:1;">1 lugar</p>
+        <p class="label" style="color:rgba(255,255,255,.4);margin-top:6px;position:relative;z-index:1;">para los 3 hoy<br>en archivos separados</p>
+      </div>
+
+      <div style="position:relative;overflow:hidden;padding:16px 14px;border:1px solid rgba(255,0,170,.15);border-radius:6px;background:rgba(255,0,170,.03);">
+        <span class="side-num" style="position:absolute;right:-4px;bottom:-6px;font-size:clamp(46px,5.5vw,62px);color:rgba(255,0,170,.14);line-height:1;">03</span>
+        <p class="headline" style="font-size:clamp(20px,2.2vw,30px);color:var(--magenta);letter-spacing:-.02em;position:relative;z-index:1;">20+</p>
+        <p class="label" style="color:rgba(255,255,255,.4);margin-top:6px;position:relative;z-index:1;">alertas que hoy<br>nadie detecta a tiempo</p>
+      </div>
+
+    </div>
+    <p style="font-family:'Space Grotesk';font-size:clamp(12px,1.2vw,15px);font-weight:300;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:.06em;">
+      Andy Montes &nbsp;·&nbsp; Estratega de Datos &nbsp;·&nbsp; AI Fluency
+    </p>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<script>
+const TOTAL=13;let cur=0;
+const slides=document.querySelectorAll('.slide');
+function showSlide(n){
+  slides[cur].classList.remove('active');
+  cur=Math.max(0,Math.min(TOTAL-1,n));
+  slides[cur].classList.add('active');
+  document.getElementById('progress').style.width=((cur+1)/TOTAL*100)+'%';
+  document.getElementById('counter').textContent=(cur+1)+' / '+TOTAL;
+  const isLight=slides[cur].classList.contains('slide-light');
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    b.style.background=isLight?'rgba(0,0,0,.06)':'rgba(255,255,255,.05)';
+    b.style.borderColor=isLight?'rgba(0,0,0,.12)':'rgba(255,255,255,.1)';
+    b.style.color=isLight?'#aaa':'rgba(255,255,255,.3)';
+  });
+  document.getElementById('counter').style.color=isLight?'rgba(0,0,0,.25)':'rgba(255,255,255,.3)';
+  if(cur===0)initSlide1();
+}
+function go(d){showSlide(cur+d)}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '){e.preventDefault();go(1)}
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();go(-1)}
+  if(e.key==='f'||e.key==='F'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}
+});
+let tx=0;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
+document.addEventListener('touchend',e=>{const d=tx-e.changedTouches[0].clientX;if(Math.abs(d)>48)go(d>0?1:-1)});
+document.addEventListener('mousemove',e=>{
+  document.querySelectorAll('.sp-card').forEach(card=>{
+    const r=card.getBoundingClientRect();
+    card.style.setProperty('--mx',(e.clientX-r.left)+'px');
+    card.style.setProperty('--my',(e.clientY-r.top)+'px');
+  });
+});
+
+class Scramble{
+  constructor(el){this.el=el;this.chars='!<>—_/[]{}=+*^?#ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'}
+  run(text){
+    const q=text.split('').map(to=>({to,start:Math.floor(Math.random()*16),end:Math.floor(Math.random()*18)+16,char:''}));
+    let frame=0;
+    const tick=()=>{
+      let out='',done=0;
+      q.forEach(item=>{
+        if(frame>=item.end){out+=item.to===' '?' ':item.to;done++}
+        else if(frame>=item.start){
+          if(!item.char||Math.random()<.28)item.char=this.chars[Math.floor(Math.random()*this.chars.length)];
+          out+=`<span style="color:var(--cyan);opacity:.55">${item.char}</span>`;
+        }else{out+=item.to===' '?' ':'<span style="opacity:0">x</span>'}
+      });
+      this.el.innerHTML=out;
+      if(done<q.length){frame++;requestAnimationFrame(tick)}
+    };
+    requestAnimationFrame(tick);
+  }
+}
+
+function assembleParticles(targetEl,canvas){
+  const ctx=canvas.getContext('2d');
+  canvas.width=canvas.offsetWidth;canvas.height=canvas.offsetHeight;
+  const text=targetEl.textContent.trim();
+  const slide=document.getElementById('s1');
+  const rect=slide.getBoundingClientRect();
+  const tRect=targetEl.getBoundingClientRect();
+  const fontSize=Math.max(16,Math.min(26,window.innerWidth*0.02));
+  ctx.font=`300 ${fontSize}px 'Space Grotesk',sans-serif`;
+  const cx=canvas.width/2;
+  const cy=tRect.top-rect.top+tRect.height/2;
+  const offC=document.createElement('canvas');
+  const offX=offC.getContext('2d');
+  const tw=ctx.measureText(text).width+40;
+  const th=fontSize*2.2;
+  offC.width=tw;offC.height=th;
+  offX.font=`300 ${fontSize}px 'Space Grotesk',sans-serif`;
+  offX.fillStyle='#fff';offX.textAlign='center';offX.textBaseline='middle';
+  offX.fillText(text,tw/2,th/2);
+  const imgData=offX.getImageData(0,0,tw,th);
+  const targets=[];
+  for(let y=0;y<th;y+=4)for(let x=0;x<tw;x+=4)if(imgData.data[(y*tw+x)*4+3]>128)targets.push({x:cx-tw/2+x,y:cy-th/2+y});
+  const maxP=280;
+  const sampled=targets.length>maxP?targets.filter((_,i)=>i%Math.ceil(targets.length/maxP)===0).slice(0,maxP):targets;
+  const particles=sampled.map(t=>({x:Math.random()*canvas.width,y:Math.random()*canvas.height,tx:t.x,ty:t.y,size:Math.random()*1.6+0.5,speed:Math.random()*0.04+0.025,alpha:0}));
+  let frame=0;
+  function animate(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    let done=0;
+    particles.forEach(p=>{
+      p.x+=(p.tx-p.x)*p.speed;p.y+=(p.ty-p.y)*p.speed;
+      p.alpha=Math.min(1,p.alpha+0.04);
+      if(Math.hypot(p.x-p.tx,p.y-p.ty)<1.5)done++;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,255,255,${p.alpha})`;ctx.fill();
+    });
+    frame++;
+    if(done<particles.length*0.92&&frame<180)requestAnimationFrame(animate);
+    else{ctx.clearRect(0,0,canvas.width,canvas.height);targetEl.style.transition='opacity .4s ease';targetEl.style.opacity='1';}
+  }
+  requestAnimationFrame(animate);
+}
+
+let s1done=false;
+function initSlide1(){
+  if(s1done)return;s1done=true;
+  new Scramble(document.getElementById('scramble')).run('Trasiego Wines');
+  setTimeout(()=>assembleParticles(document.getElementById('particle-text'),document.getElementById('particles-canvas')),600);
+}
+document.getElementById('progress').style.width=(1/TOTAL*100)+'%';
+setTimeout(initSlide1,200);
+</script>
+</body>
+</html>
